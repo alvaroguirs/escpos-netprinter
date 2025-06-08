@@ -1,0 +1,28 @@
+services:
+  escpos-netprinter:
+    build:
+      context: .
+    image: escpos-netprinter:latest
+    container_name: escpos_netprinter
+    ports:
+      - "9100:9100"  # JetDirect port
+      - "515:515"    # LPD port
+      - "8080:80"    # Web interface on port 8080
+      # - "631:631"  # Uncomment for CUPS interface access (optional)
+    environment:
+      - ESCPOS_TIMEOUT=60  # Increased timeout to 60 seconds
+      - ESCPOS_DEBUG=true  # Enable debug mode to see more information
+      - FLASK_RUN_DEBUG=false
+    restart: unless-stopped
+    volumes:
+      - receipts:/app/web/receipts  # Persist receipts across container restarts
+      - tmp_data:/app/web/tmp       # Add volume for temporary files
+    command: >
+      sh -c "mkdir -p /app/web/tmp && 
+             mkdir -p /app/web/receipts &&
+             chmod -R 777 /app/web &&
+             python escpos-netprinter.py"
+
+volumes:
+  receipts:
+  tmp_data:

@@ -29,7 +29,7 @@ class ESCPOSHandler(socketserver.StreamRequestHandler):
     """
         Voir l'APG Epson section "Processing the Data Received from the Printer"
     """
-    timeout = 10  #On abandonne une réception après 10 secondes - un compromis pour assurer que tout passe sans se bourrer de connections zombies.
+    timeout = int(getenv('ESCPOS_TIMEOUT', '10'))  #Configurable timeout via environment variable (default 10 seconds)
     netprinter_debugmode = "false"
     
     # Receive the print data and dump it in a file.
@@ -1486,12 +1486,12 @@ class ESCPOSHandler(socketserver.StreamRequestHandler):
 app = Flask(__name__)
 
 @app.route("/")
-def accueil():
+def home():
     return render_template('accueil.html.j2', host = request.host.split(':')[0], 
                            jetDirectPort=getenv('PRINTER_PORT', '9100'),
                             debug=getenv('FLASK_RUN_DEBUG', "false") )
 
-@app.route("/recus")
+@app.route("/receipts")
 def list_receipts():
     """ List all the receipts available """
     try:
@@ -1510,10 +1510,10 @@ def list_receipts():
             noms.reverse()
             return render_template('receiptList.html.j2', receiptlist=noms)
     except FileNotFoundError:
-        return redirect(url_for('accueil'))
+        return redirect(url_for('home'))
     
 
-@app.route("/recus/<int:fileID>")
+@app.route("/receipts/<int:fileID>")
 def show_receipt(fileID:int):
     """ Show the receipt with the given ID """
     # Open the CSV file in read mode
